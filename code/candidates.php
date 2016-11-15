@@ -98,7 +98,7 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 	if ($errCode) {
 		return $db;
 	}
-	
+
 	if ($jobs_data) {
 		// loop through each job and explode out the pipe | delimited skill lists.
 		foreach ($jobs_data as &$job_data) {
@@ -106,16 +106,26 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 				$job_data['skillIds'] = explode('|', $job_data['skillIds']);
 				$job_data['skillNames'] = explode('|', $job_data['skillNames']);
 				$job_data['skillPcts'] = explode('|', $job_data['skillPcts']);
+				$job_data['skillTestedFlag'] = explode('|', $job_data['skillTestedFlag']);
+				$job_data['skillTestResults'] = explode('|', $job_data['skillTestResults']);
+				$job_data['skillTotalMonths'] = explode('|', $job_data['skillTotalMonths']);
 				$temp_skills = array();
 				foreach ( $job_data['skillIds'] as $key => $skillId) {
 					$temp_skills[] = array('SkillId' => $skillId, 
 											'skillName' => $job_data['skillNames'][$key],
-											'skillPct' => $job_data['skillPcts'][$key]);
+											'skillPct' => $job_data['skillPcts'][$key],
+											'skillTested' => (array_key_exists('skillTestedFlag', $job_data)) ? $job_data['skillTestedFlag'][$key] : 0,
+											'skillTestResults' => (array_key_exists('skillTestResults', $job_data)) ? $job_data['skillTestResults'][$key] : 'NULL',
+											'skillTotalMonths' => (array_key_exists('skillTotalMonths', $job_data)) ? $job_data['skillTotalMonths'][$key] : 'NULL',
+											);
 				}
 				$job_data['jobSkills'] = $temp_skills;
 				unset($job_data['skillIds']);
 				unset($job_data['skillNames']);
 				unset($job_data['skillPcts']);
+				unset($job_data['skillTestedFlag']);
+				unset($job_data['skillTestResults']);
+				unset($job_data['skillTotalMonths']);
 			}
 			// now need to retrieve the highlights for each job
 			// TODO: retrieve highlights per job
