@@ -58,7 +58,7 @@
 	padding-top: 14px;
 }
 
-.pro-summary-title {
+.left-title {
 	text-align: right;
 	font-size: 1.3em;
 	font-weight: bold;
@@ -73,4 +73,8 @@
 
 .highlight-list li {
 	margin-bottom: 4px;
+}
+
+#tech-skills {
+	margin-top: 35px;
 }

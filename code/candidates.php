@@ -99,6 +99,10 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 		return $db;
 	}
 
+/* echo var_dump($jobs_data);
+die();
+	 */
+	
 	if ($jobs_data) {
 		// loop through each job and explode out the pipe | delimited skill lists.
 		foreach ($jobs_data as &$job_data) {
@@ -109,15 +113,19 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 				$job_data['skillTestedFlag'] = explode('|', $job_data['skillTestedFlag']);
 				$job_data['skillTestResults'] = explode('|', $job_data['skillTestResults']);
 				$job_data['skillTotalMonths'] = explode('|', $job_data['skillTotalMonths']);
+				$job_data['skillTags'] = explode('|', $job_data['skillTags']);
+				$job_data['skillTagNames'] = explode('|', $job_data['skillTagNames']);
 				$temp_skills = array();
 				foreach ( $job_data['skillIds'] as $key => $skillId) {
 					$temp_skills[] = array('SkillId' => $skillId, 
-											'skillName' => $job_data['skillNames'][$key],
-											'skillPct' => $job_data['skillPcts'][$key],
-											'skillTested' => (array_key_exists('skillTestedFlag', $job_data)) ? $job_data['skillTestedFlag'][$key] : 0,
-											'skillTestResults' => (array_key_exists('skillTestResults', $job_data)) ? $job_data['skillTestResults'][$key] : 'NULL',
-											'skillTotalMonths' => (array_key_exists('skillTotalMonths', $job_data)) ? $job_data['skillTotalMonths'][$key] : 'NULL',
-											);
+								'skillName' => $job_data['skillNames'][$key],
+								'skillPct' => $job_data['skillPcts'][$key],
+								'skillTested' => (array_key_exists('skillTestedFlag', $job_data)) ? $job_data['skillTestedFlag'][$key] : 0,
+								'skillTestResults' => (array_key_exists('skillTestResults', $job_data)) ? $job_data['skillTestResults'][$key] : 'NULL',
+								'skillTotalMonths' => (array_key_exists('skillTotalMonths', $job_data)) ? $job_data['skillTotalMonths'][$key] : 'NULL',
+								'skillTags' => (array_key_exists('skillTags', $job_data)) ? $job_data['skillTags'][$key] : 'NULL',
+								'skillTagNames' => (array_key_exists('skillTagNames', $job_data)) ? $job_data['skillTagNames'][$key] : 'NULL',
+								);
 				}
 				$job_data['jobSkills'] = $temp_skills;
 				unset($job_data['skillIds']);
@@ -126,6 +134,8 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 				unset($job_data['skillTestedFlag']);
 				unset($job_data['skillTestResults']);
 				unset($job_data['skillTotalMonths']);
+				unset($job_data['skillTags']);
+				unset($job_data['skillTagNames']);
 			}
 			// now need to retrieve the highlights for each job
 			// TODO: retrieve highlights per job

@@ -65,7 +65,7 @@ function curl_load_file( $url, $post_string = null, $request_type = 'POST' ) {
 	return $output;
 }
 
-$url = 'http://localhost/api/candidates/7?api_cc=three&api_key=fj49fk390gfk3f50';
+$url = 'http://www.ronboutilier.com/api/candidates/7?api_cc=three&api_key=fj49fk390gfk3f50';
 
 $ret = curl_load_file($url, array(), 'GET');
 
@@ -96,7 +96,7 @@ function build_resume( $c ) {
 					</span>
 				</div>
 				<div class="row" id="pro-summary">
-					<div class="col-md-2 pro-summary-title">
+					<div class="col-md-2 left-title">
 						Professional<br>Summary
 					</div>
 					<div class="col-md-9 pro-summary-highs">
@@ -105,17 +105,17 @@ function build_resume( $c ) {
 								foreach( $c->candidateHighlights as $highlight ) {
 									echo '<li>', $highlight->highlight, '</li>';
 								}
-							
 							?>
 						</ul>
 					</div>
+				</div><!--  end of pro-summary -->
+				<div class="row" id="tech-skills">
+					<div class="col-md-2 left-title">
+						Technical<br>Skills
+					</div>
 				
 				
-				
-				
-				</div>
-			
-			
+				</div><!--  end of tech-skills -->
 			</div>
 			<div class="col-md-2"></div>
 		</div>
