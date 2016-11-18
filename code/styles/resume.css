@@ -54,14 +54,15 @@
 	margin-right: 20px;
 }
 
-#pro-summary {
+#pro-summary-container {
 	padding-top: 14px;
+	width: 100%;
 }
 
 .left-title {
 	text-align: right;
 	font-size: 1.3em;
-	font-weight: bold;
+	font-weight: 600;
 	padding: 10px 20px 0 0;
 	font-family: 'Signika', cursive;
 }
@@ -75,6 +76,89 @@
 	margin-bottom: 4px;
 }
 
-#tech-skills {
-	margin-top: 35px;
+#tech-skills-container, #experience-container, #education-container, #certification-container {
+	margin: 45px 0;
+	width: 100%;
+}
+
+.tech-skills-container table tr td {
+	font-family: 'Calibri', san-serif;
+	line-height: 18px;	
+	border-color: #333;
+}
+
+#experience-container, #education-container, #certification-container {
+	border-top: 1px solid #aaa;
+	padding-top: 20px;
+}
+
+.job-list {
+	padding-left: 10px;
+}
+
+.job-title {
+	font-size: 1.3em;
+	font-weight: bold;
+	padding: 10px 0 0 0;
+	font-family: 'Signika', cursive;
+	color: red;
+}
+
+.job-location, .job-dates {
+	font-size: 1.1em;
+	padding: 10px 0 0 0;
+	font-family: 'Signika', cursive;
+}
+
+.job-dates {
+	float: right;
+	color: white;
+	background-color: red;
+	padding: 2px 25px;
+}
+.job-highlight-title {
+	clear: both;
+	text-decoration: underline;
+	font-weight: bold;
+	font-family: 'Calibri', san-serif;
+	padding: 10px 0;
+}
+
+.job-highlights, .environment-list {
+	font-family: 'Calibri', san-serif;
+	line-height: 18px;	
+}
+
+.job-environment-title {
+	text-decoration: underline;
+	font-weight: bold;
+	font-family: 'Calibri', san-serif;
+	padding: 10px 0;
+}
+
+.environment-list {
+	padding: 10px 5px 0 20px;
+	font-family: 'Calibri', san-serif;
+	line-height: 18px;	
+}
+
+.ed-title {
+	font-size: 1.3em;
+	font-weight: bold;
+	padding: 10px 0 0 0;
+	font-family: 'Signika', cursive;
+	color: red;
+}
+
+.ed-school {
+	font-size: 1.1em;
+	font-family: 'Signika', cursive;
+	font-style: italic;
+}
+
+#certifications-list ul li {
+	font-size: 1.1em;
+	font-weight: bold;
+	padding: 10px 0 0 0;
+	font-family: 'Signika', cursive;
 }

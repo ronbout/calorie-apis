@@ -78,14 +78,11 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 	if (array_key_exists('certSkillName', $response_data))  $response_data['certSkillName'] = explode('|', $response_data['certSkillName']);
 	if (array_key_exists('edSkillName', $response_data))  $response_data['edSkillName'] = explode('|', $response_data['edSkillName']);
 
-	// TODO: create lower object for person info
-	
 	$response_data = runLowerObject( $response_data, 'person');
 	
 	// TODO:  create lower object for agency contact if it exists
 	
 	$query = 'SELECT id, highlight FROM candidatehighlights WHERE candidateId = ?';
-	
 	$highlights = pdo_exec( $request, $response, $db, $query, array($id), 'Retrieving Candidate Highlights', $errCode, false, true );
 	if ($errCode) {
 		return $db;
@@ -98,10 +95,6 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 	if ($errCode) {
 		return $db;
 	}
-
-/* echo var_dump($jobs_data);
-die();
-	 */
 	
 	if ($jobs_data) {
 		// loop through each job and explode out the pipe | delimited skill lists.
@@ -138,7 +131,6 @@ die();
 				unset($job_data['skillTagNames']);
 			}
 			// now need to retrieve the highlights for each job
-			// TODO: retrieve highlights per job
 			$query = 'SELECT id, highlight FROM candidatejobhighlights WHERE jobId = ?';
 			$highlights = pdo_exec( $request, $response, $db, $query, array($job_data['id']), 'Retrieving Candidate Job Highlights', 
 									$errCode, false, true );
