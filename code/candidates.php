@@ -207,6 +207,9 @@ $app->get ( '/candidates/{id}', function (Request $request, Response $response) 
 		return $db;
 	}
 	$social_media && $response_data['socialMedia'] = $social_media;
+//echo var_dump($response_data);
+//die();
+	
 	
 	$data = array ('data' => $response_data );
 	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
