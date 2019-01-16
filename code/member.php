@@ -1,0 +1,114 @@
+<?php
+// candidates.php
+// the api code for RESTful CRUD operations of the Candidates
+// table and related.  This version will be done with my own
+// SQL code.  Then, it will be refactored with an ORM
+
+use \Psr\Http\Message\ServerRequestInterface as Request;
+use \Psr\Http\Message\ResponseInterface as Response;
+
+/**
+ * get member info by email
+ */
+$app->get ( '/members', function (Request $request, Response $response) {
+	$data = array ();
+
+	// check for password being sent
+	$query = $request->getQueryParams();
+	if (  !isset($query['password']) || !isset($query['email']) ) {
+		$data['error'] = true;
+		$data['message'] = 'Password and email parameters are required.';
+		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
+		return $newResponse;
+	}
+
+	$password = $query['password'];
+	$email = $query['email'];
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return;
+	}
+
+	$query = 'select member_id as memberId, 
+							first_name as firstName, 
+							last_name as lastName,
+							 user_name as userName, 
+							 password,
+							 email from member 
+	where email = ?' ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($email), 'Retrieving Member', $errCode, true );
+	if ($errCode) {
+		return;
+	}
+
+	// check password if not social login
+	// social logins are already password protected
+	if ($password != 'social' && md5(trim($password)) != $response_data['password']) {
+		$data ['error'] = true;
+		$data ['message'] = 'Incorrect password ';
+		$newResponse = $response->withJson ( $data, 400, JSON_NUMERIC_CHECK );
+		return $newResponse;
+	}
+
+	unset($response_data['password']);
+	$response_data['totalCalsToday'] = 1290;
+	
+	$data = array ('data' => $response_data );
+	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+} );
+
+/**
+ * create a new user
+ */
+$app->post ( '/members', function (Request $request, Response $response) {
+	$data = $request->getParsedBody();
+
+	$user_name = isset($data['username']) ? filter_var($data['username'], FILTER_SANITIZE_STRING) : '' ;
+	$first_name = isset($data['firstname']) ? filter_var($data['firstname'], FILTER_SANITIZE_STRING) : '' ;
+	$last_name = isset($data['lastname']) ? filter_var($data['lastname'], FILTER_SANITIZE_STRING) : '' ;
+	$email = isset($data['email']) ? filter_var($data['email'], FILTER_SANITIZE_STRING) : '' ;
+	$password = isset($data['password']) ? md5($data['password']) : '';
+
+	if (!$user_name || !$first_name || !$last_name || !$email || !$password) {
+		$data['error'] = true;
+		$data['message'] = 'Username, firstname, lastname, email and password are required.';
+		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
+		return $newResponse;
+	}
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return;
+	}
+
+	$query = 'INSERT INTO member 
+							(first_name, last_name, user_name, email, confirm_flag, password) 
+							VALUES  (?, ?, ?, ?, ?, ?)';
+
+	$insert_data = array($first_name, $last_name, $user_name, $email, 1, $password);							
+
+	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Member', $errCode, false, false, false );
+	if ($errCode) {
+		return;
+	}
+
+	$return_data = array(
+		'memberid'				=> $db->lastInsertId(),
+		'username'				=> $user_name,
+		'firstName'				=> $first_name,
+		'lastName'				=> $last_name,
+		'email'						=> $email,
+		'totalCalsToday'	=> 0
+	);
+	$return_data = array('data' => $return_data);
+	$newResponse = $response->withJson($return_data, 201, JSON_NUMERIC_CHECK );
+	return $newResponse;
+});

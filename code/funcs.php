@@ -79,19 +79,19 @@ function db_connect(Request $request, Response $response, &$errCode) {
 	// otherwise, the db connection will be returned
 
 	$data = array();
-	// have to get company code and api key..or error
+	// have to get  api key..or error
 	$query = $request->getQueryParams();
-	if ( !isset($query['api_cc']) || !isset($query['api_key']) ) {
+	if (  !isset($query['api_key']) ) {
 		$errCode = -3;
 		$data['error'] = true;
-		$data['message'] = 'Company Code and API Key are required.';
+		$data['message'] = 'API Key is required.';
 		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
 		return $newResponse;
 	}
 	
 	// connect to database
  	$errCode = '';
-	if (!($db = pdoConnect($query['api_cc'], $errCode, $query['api_key']))) {
+	if (!($db = pdoConnect($errCode, $query['api_key']))) {
 		switch($errCode) {
 			case -2:
 				$data['error'] = true;
@@ -111,13 +111,13 @@ function db_connect(Request $request, Response $response, &$errCode) {
 	return $db;
 }
 
-function pdoConnect($companyCode, &$errorCode, $apiKeySent) {
+function pdoConnect(&$errorCode, $apiKeySent) {
 	// connects to database $db using PDO for mysql
 	// must get user and password from passwords dir
 	// returns either PDO object or error code
 
 	$errorCode = 0;
-	$passInfo = get_pass_info($companyCode);
+	$passInfo = get_pass_info('abc');
 	if (!$passInfo) {	
 		$errorCode = -1;   // error -1 could not retrieve user/password info
 		return false;
@@ -146,18 +146,21 @@ function pdoConnect($companyCode, &$errorCode, $apiKeySent) {
 	return $cn;
 }
 
-function pdo_exec( Request $request, Response $response, $db, $query, $execArray, $errMsg, &$errCode, $checkCount = false, $ret_array = false ) {
+function pdo_exec( Request $request, Response $response, $db, $query, $execArray, $errMsg, &$errCode, $checkCount = false, $ret_array_flg = false, $return_flg = true ) {
 	$stmt = $db->prepare ( $query );
 	
 	if (! $stmt->execute ( $execArray )) {
 		$errCode = true;
 		$data ['error'] = true;
+		$data['SQLState'] = $stmt->errorCode();
 		$data ['message'] = 'Database SQL Error ' . $errMsg . ' ' . $stmt->errorCode () . ' - ' . $stmt->errorInfo () [2];
+		$data = array('data' => $data);
 		$newResponse = $response->withJson ( $data, 500, JSON_NUMERIC_CHECK );
 		return $newResponse;
 	}
 	
-	if ( $stmt->rowCount () == 0) {
+	// the stmt rowCount only matters if we are supposed to return a value
+	if ( $stmt->rowCount () == 0 && ($ret_array_flg || $return_flg)) {
 		if ( $checkCount ) {
 			$errCode = true;
 			$data ['error'] = false;
@@ -169,7 +172,7 @@ function pdo_exec( Request $request, Response $response, $db, $query, $execArray
 		}
 	}
 	
-	if ( $ret_array ) {
+	if ( $ret_array_flg ) {
 		$ret_data = array();
 		while ( ($info = $stmt->fetch ( PDO::FETCH_ASSOC )) ) {
 			$ret_data [] = array_filter($info, function($val) {
@@ -177,10 +180,12 @@ function pdo_exec( Request $request, Response $response, $db, $query, $execArray
 			});;
 		}
 		return $ret_data;
-	} else {
+	} elseif ($return_flg) {
 		return array_filter($stmt->fetch ( PDO::FETCH_ASSOC ), function($val) {
 			return $val !== null;
 		});;
+	} else {
+		return true;
 	}
 }
 
