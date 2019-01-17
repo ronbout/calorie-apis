@@ -74,14 +74,18 @@ function json_connect(Request $request, Response $response, $configLoc, &$errCod
 	return json_decode($configFile, true);
 }
 
-function db_connect(Request $request, Response $response, &$errCode) {
+function db_connect(Request $request, Response $response, &$errCode, $api_key=null) {
 	// if there is an error, $errCode will be set and a Response will be returned
 	// otherwise, the db connection will be returned
 
 	$data = array();
 	// have to get  api key..or error
-	$query = $request->getQueryParams();
-	if (  !isset($query['api_key']) ) {
+	if (! $api_key) {
+		$query = $request->getQueryParams();
+		$api_key = isset($query['api_key']) ? $query['api_key'] : null;
+	} 
+
+	if (  ! $api_key ) {
 		$errCode = -3;
 		$data['error'] = true;
 		$data['message'] = 'API Key is required.';
@@ -91,7 +95,7 @@ function db_connect(Request $request, Response $response, &$errCode) {
 	
 	// connect to database
  	$errCode = '';
-	if (!($db = pdoConnect($errCode, $query['api_key']))) {
+	if (!($db = pdoConnect($errCode, $api_key))) {
 		switch($errCode) {
 			case -2:
 				$data['error'] = true;

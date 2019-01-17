@@ -68,15 +68,19 @@ $app->get ( '/members', function (Request $request, Response $response) {
 $app->post ( '/members', function (Request $request, Response $response) {
 	$data = $request->getParsedBody();
 
-	$user_name = isset($data['username']) ? filter_var($data['username'], FILTER_SANITIZE_STRING) : '' ;
-	$first_name = isset($data['firstname']) ? filter_var($data['firstname'], FILTER_SANITIZE_STRING) : '' ;
-	$last_name = isset($data['lastname']) ? filter_var($data['lastname'], FILTER_SANITIZE_STRING) : '' ;
+	$user_name = isset($data['userName']) ? filter_var($data['userName'], FILTER_SANITIZE_STRING) : '' ;
+	$first_name = isset($data['firstName']) ? filter_var($data['firstName'], FILTER_SANITIZE_STRING) : '' ;
+	$last_name = isset($data['lastName']) ? filter_var($data['lastName'], FILTER_SANITIZE_STRING) : '' ;
 	$email = isset($data['email']) ? filter_var($data['email'], FILTER_SANITIZE_STRING) : '' ;
+	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
 	$password = isset($data['password']) ? md5($data['password']) : '';
 
-	if (!$user_name || !$first_name || !$last_name || !$email || !$password) {
+	// all but password are required.  Password is not
+	// because it could be a social login, which handles
+	// uses its own password
+	if (!$user_name || !$first_name || !$last_name || !$email ) {
 		$data['error'] = true;
-		$data['message'] = 'Username, firstname, lastname, email and password are required.';
+		$data['message'] = 'Username, firstname, lastname, and email are required.';
 		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
 		return $newResponse;
 	}
@@ -84,7 +88,7 @@ $app->post ( '/members', function (Request $request, Response $response) {
 	// login to the database. if unsuccessful, the return value is the
 	// Response to send back, otherwise the db connection;
 	$errCode = 0;
-	$db = db_connect ( $request, $response, $errCode );
+	$db = db_connect ( $request, $response, $errCode, $api );
 	if ($errCode) {
 		return;
 	}
