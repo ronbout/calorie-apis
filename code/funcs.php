@@ -152,11 +152,12 @@ function pdoConnect(&$errorCode, $apiKeySent) {
 
 function pdo_exec( Request $request, Response $response, $db, $query, $execArray, $errMsg, &$errCode, $checkCount = false, $ret_array_flg = false, $return_flg = true ) {
 	$stmt = $db->prepare ( $query );
+	$data = array();
 	
 	if (! $stmt->execute ( $execArray )) {
 		$errCode = true;
 		$data ['error'] = true;
-		$data['SQLState'] = $stmt->errorCode();
+		$data ['errorCode'] = $stmt->errorCode();
 		$data ['message'] = 'Database SQL Error ' . $errMsg . ' ' . $stmt->errorCode () . ' - ' . $stmt->errorInfo () [2];
 		$data = array('data' => $data);
 		$newResponse = $response->withJson ( $data, 500, JSON_NUMERIC_CHECK );
@@ -167,6 +168,7 @@ function pdo_exec( Request $request, Response $response, $db, $query, $execArray
 	if ( $stmt->rowCount () == 0 && ($ret_array_flg || $return_flg)) {
 		if ( $checkCount ) {
 			$errCode = true;
+			$data = array();
 			$data ['error'] = false;
 			$data ['message'] = 'No records Found';
 			$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );

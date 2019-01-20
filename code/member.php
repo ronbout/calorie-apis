@@ -43,7 +43,7 @@ $app->get ( '/members', function (Request $request, Response $response) {
 
 	$response_data = pdo_exec( $request, $response, $db, $query, array($email), 'Retrieving Member', $errCode, true );
 	if ($errCode) {
-		return;
+		return $response_data;
 	}
 
 	// check password if not social login
@@ -101,7 +101,7 @@ $app->post ( '/members', function (Request $request, Response $response) {
 
 	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Member', $errCode, false, false, false );
 	if ($errCode) {
-		return;
+		return $response_data;
 	}
 
 	$return_data = array(
