@@ -115,6 +115,7 @@ $app->post ( '/foods/basic', function (Request $request, Response $response) {
 	$protein_grams = isset($data['protein']) ? filter_var($data['protein'], FILTER_SANITIZE_STRING) : '' ;
 	$fiber_grams = isset($data['fiber']) ? filter_var($data['fiber'], FILTER_SANITIZE_STRING) : 0 ;
 	$points = isset($data['points']) ? filter_var($data['points'], FILTER_SANITIZE_STRING) : 0 ;
+	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : false ;
 	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
 
 	// check required fields
@@ -195,6 +196,20 @@ $app->post ( '/foods/basic', function (Request $request, Response $response) {
 
 		$tmp = pdo_exec( $request, $response, $db, $query, array($food_id), 'Deleting Food', $errCode, false, false, false );
 		return $response_data;
+	}
+
+	// if this is a food fav, update the member_food_favs table
+	if ($fav) {
+		$query = 'INSERT INTO member_food_favs 
+		(member_id, food_id) 
+		VALUES  (?, ?)';
+
+		$insert_data = array($owner, $food_id);							
+
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Favorite', $errCode, false, false, false );
+		if ($errCode) {
+		return $response_data;
+		}
 	}
 
 	$return_data = array('foodId' => $food_id);
