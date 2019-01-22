@@ -14,23 +14,23 @@ $app->get ( '/members', function (Request $request, Response $response) {
 	$data = array ();
 
 	// check for password being sent
-	$query = $request->getQueryParams();
-	if (  !isset($query['password']) || !isset($query['email']) ) {
+	$getquery = $request->getQueryParams();
+	if (  !isset($getquery['password']) || !isset($getquery['email']) ) {
 		$data['error'] = true;
 		$data['message'] = 'Password and email parameters are required.';
 		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
 		return $newResponse;
 	}
 
-	$password = $query['password'];
-	$email = $query['email'];
+	$password = $getquery['password'];
+	$email = $getquery['email'];
 
 	// login to the database. if unsuccessful, the return value is the
 	// Response to send back, otherwise the db connection;
 	$errCode = 0;
 	$db = db_connect ( $request, $response, $errCode );
 	if ($errCode) {
-		return;
+		return $db;
 	}
 
 	$query = 'select member_id as memberId, 
@@ -90,7 +90,7 @@ $app->post ( '/members', function (Request $request, Response $response) {
 	$errCode = 0;
 	$db = db_connect ( $request, $response, $errCode, $api );
 	if ($errCode) {
-		return;
+		return $db;
 	}
 
 	$query = 'INSERT INTO member 
