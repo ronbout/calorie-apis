@@ -12,7 +12,7 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
  // GET FOODS WITH NUTRIENT RESULTS - BOTH BASIC & RECIPE
-$app->get ( '/food/nutrients/{id}', function (Request $request, Response $response) {
+$app->get ( '/foods/nutrients/{id}', function (Request $request, Response $response) {
 	$id = $request->getAttribute ( 'id' );
 	$data = array ();
 
@@ -227,7 +227,7 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 /**
  * GET A LIST OF MEMBER FAV'S FOR A GIVEN FOOD ID
  */
- $app->get ( '/food/fav/{id}', function (Request $request, Response $response) {
+ $app->get ( '/foods/fav/{id}', function (Request $request, Response $response) {
 	$food_id = $request->getAttribute ( 'id' );
 	$data = array ();
 
