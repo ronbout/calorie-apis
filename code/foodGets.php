@@ -12,7 +12,6 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
  // GET FOODS WITH NUTRIENT RESULTS - BOTH BASIC & RECIPE
-
 $app->get ( '/food/nutrients/{id}', function (Request $request, Response $response) {
 	$id = $request->getAttribute ( 'id' );
 	$data = array ();
@@ -46,7 +45,7 @@ $app->get ( '/food/nutrients/{id}', function (Request $request, Response $respon
 } );
 
 
-
+// functions for getting the food and nutrients
 function get_food($db, $request, $response, $id, &$errCode) {
 	$query = 'SELECT f.*, fu.description as food_units FROM food f, food_units fu WHERE fu.id = f.serving_units AND f.id = ?';
 	$response_data = pdo_exec( $request, $response, $db, $query, 
@@ -224,3 +223,31 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	$data = array ('data' => $response_data );
 	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
 }); 
+
+/**
+ * GET A LIST OF MEMBER FAV'S FOR A GIVEN FOOD ID
+ */
+ $app->get ( '/food/fav/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = array ();
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return $db;
+	}
+	
+	$query = "SELECT member_id AS memberId 
+							FROM member_food_favs 
+							WHERE food_id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Favorites', $errCode, true, true );
+	if ($errCode) {
+	return $response_data;
+	}
+
+	$data = array ('data' => $response_data );
+	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+} );

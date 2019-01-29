@@ -116,3 +116,31 @@ $app->post ( '/members', function (Request $request, Response $response) {
 	$newResponse = $response->withJson($return_data, 201, JSON_NUMERIC_CHECK );
 	return $newResponse;
 });
+
+/**
+ * GET A LIST OF FOOD FAV'S FOR A GIVEN MEMBER ID
+ */
+$app->get ( '/members/fav/{id}', function (Request $request, Response $response) {
+	$member_id = $request->getAttribute ( 'id' );
+	$data = array ();
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return $db;
+	}
+	
+	$query = "SELECT food_id AS foodId 
+							FROM member_food_favs 
+							WHERE member_id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($member_id), 'Retrieving Member Favorites', $errCode, true, true );
+	if ($errCode) {
+	return $response_data;
+	}
+
+	$data = array ('data' => $response_data );
+	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+} );
