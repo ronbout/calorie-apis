@@ -133,8 +133,12 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	// add keyword clause if included
 	$keywordSql = $keyword ? " AND (f.name like :keyword OR f.description like :keyword) " : "";
 
-	$basic_select = "(SELECT f.id, f.name, f.description, fd.calories, m.user_name as owner, 'Basic Food' as foodType";
-	$recipe_select = "(SELECT f.id, f.name, f.description, 0, m.user_name as owner, 'Food Recipe' as foodType";
+	$basic_select = "(SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, ROUND(f.serving_size,2) as servSize, 
+										f.serving_units as servUnits, ROUND(fd.calories,1) as calories, ROUND(fd.fat_grams,1) as fat, ROUND(fd.carb_grams,1) as carbs,
+										ROUND(fd.protein_grams,1) as protein, ROUND(fd.fiber_grams,1) as fiber, ROUND(fd.points,1) as points,
+										m.user_name as owner, 'Basic Food' as foodType";
+	$recipe_select = "(SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, f.serving_size as servSize, 
+											f.serving_units as servUnits, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m.user_name as owner, 'Food Recipe' as foodType";
 
 	$select_owner_basic = $basic_select . "
 													FROM food f, food_detail fd, member m
@@ -186,7 +190,7 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 							 $select_fav_basic .
 							 " UNION " .
 							 $select_fav_recipe . 
-							 " ORDER by name";
+							 " ORDER by foodName";
 			break;
 		case 'favFoods':
 			$sql_parms = array(':owner' => $owner);
@@ -195,7 +199,7 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 			$query = $select_fav_basic .
 							" UNION " .
 							$select_fav_recipe . 
-							" ORDER by name";
+							" ORDER by foodName";
 			break;
 		case 'allFoods':
 			$sql_parms = array();
@@ -204,7 +208,7 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 			$query = $select_all_basic .
 							" UNION " .
 							$select_all_recipe . 
-							" ORDER by name";
+							" ORDER by foodName";
 
 	}
 
