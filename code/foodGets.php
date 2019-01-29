@@ -133,11 +133,11 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	// add keyword clause if included
 	$keywordSql = $keyword ? " AND (f.name like :keyword OR f.description like :keyword) " : "";
 
-	$basic_select = "(SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, ROUND(f.serving_size,2) as servSize, 
+	$basic_select = "(SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, IFNULL(ROUND(f.serving_size,2),'') as servSize, 
 										f.serving_units as servUnits, ROUND(fd.calories,1) as calories, ROUND(fd.fat_grams,1) as fat, ROUND(fd.carb_grams,1) as carbs,
 										ROUND(fd.protein_grams,1) as protein, ROUND(fd.fiber_grams,1) as fiber, ROUND(fd.points,1) as points,
 										m.user_name as owner, 'Basic Food' as foodType";
-	$recipe_select = "(SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, f.serving_size as servSize, 
+	$recipe_select = "(SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, IFNULL(ROUND(f.serving_size,2),'') as servSize, 
 											f.serving_units as servUnits, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m.user_name as owner, 'Food Recipe' as foodType";
 
 	$select_owner_basic = $basic_select . "
