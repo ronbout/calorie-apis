@@ -45,6 +45,10 @@ $app->get ( '/members', function (Request $request, Response $response) {
 	if ($errCode) {
 		return $response_data;
 	}
+	
+	$response_data['firstName'] =  html_entity_decode($response_data['firstName'], ENT_QUOTES);
+	$response_data['lastName'] =  html_entity_decode($response_data['lastName'], ENT_QUOTES);
+	$response_data['userName'] =  html_entity_decode($response_data['userName'], ENT_QUOTES);
 
 	// check password if not social login
 	// social logins are already password protected

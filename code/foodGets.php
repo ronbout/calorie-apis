@@ -51,8 +51,13 @@ function get_food($db, $request, $response, $id, &$errCode) {
 	$response_data = pdo_exec( $request, $response, $db, $query, 
 				array($id), 'Retrieving Food', $errCode, true );
 
+	
+	$response_data['description'] =  html_entity_decode($response_data['description'], ENT_QUOTES);
+	$response_data['name'] =  html_entity_decode($response_data['name'], ENT_QUOTES);
+
 	return $response_data;
 }
+
 
 function get_nutrients($db, $request, $response, $food_id, $ingredient_flag, &$errCode, $recipe_servings) {
 	if ( !$ingredient_flag) {
@@ -220,6 +225,13 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 		return $response_data;
 	}
 
+	// because description could have escaped characters, need to decode
+	array_walk($response_data, function($rec) {
+			$rec['foodDesc'] = html_entity_decode($rec['foodDesc'], ENT_QUOTES);
+			$rec['foodName'] = html_entity_decode($rec['foodName'], ENT_QUOTES);
+			$rec['owner'] = html_entity_decode($rec['owner'], ENT_QUOTES);
+	});
+
 	$data = array ('data' => $response_data );
 	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
 }); 
@@ -275,6 +287,10 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	if ($errCode) {
 	return $response_data;
 	}
+
+	$response_data['foodDesc'] =  html_entity_decode($response_data['foodDesc'], ENT_QUOTES);
+	$response_data['foodName'] =  html_entity_decode($response_data['foodName'], ENT_QUOTES);
+	$response_data['owner'] =  html_entity_decode($response_data['owner'], ENT_QUOTES);
 
 	// check that this is a recipe by looking at ingredient flag
 	if (!$response_data['recipe']) {
@@ -337,6 +353,7 @@ $app->get ( '/foods/note/{id}', function (Request $request, Response $response) 
 
 	// nothing found, just return an empty string
 	$response_data = $response_data ? $response_data : array('note' => '');
+	$response_data['note'] = html_entity_decode($response_data['note'], ENT_QUOTES);
 
 	$data = array ('data' => $response_data );
 	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
@@ -371,6 +388,7 @@ $app->get ( '/foods/notefav/{id}', function (Request $request, Response $respons
 
 	// nothing found, just return an empty string
 	$food_data = $response_data ? $response_data : array('note' => '');
+	$food_data['note'] = html_entity_decode($food_data['note'], ENT_QUOTES);
 
 	// now get the food favs
 	
@@ -378,12 +396,14 @@ $app->get ( '/foods/notefav/{id}', function (Request $request, Response $respons
 							FROM member_food_favs 
 							WHERE food_id = ?" ;
 
-	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Favorites', $errCode, true, true );
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Favorites', $errCode, false, true );
 	if ($errCode) {
 	return $response_data;
 	}
 
-	$food_data['favs'] = $response_data;
+	if ($response_data) {
+		$food_data['favs'] = $response_data;
+	}	
 
 
 	$data = array ('data' => $food_data );

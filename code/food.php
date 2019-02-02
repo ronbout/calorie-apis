@@ -25,6 +25,7 @@ $app->post ( '/foods/basic', function (Request $request, Response $response) {
 	$protein_grams = isset($data['protein']) ? filter_var($data['protein'], FILTER_SANITIZE_STRING) : '' ;
 	$fiber_grams = isset($data['fiber']) ? filter_var($data['fiber'], FILTER_SANITIZE_STRING) : 0 ;
 	$points = isset($data['points']) ? filter_var($data['points'], FILTER_SANITIZE_STRING) : 0 ;
+	$notes = isset($data['notes']) ? filter_var($data['notes'], FILTER_SANITIZE_STRING) : 0 ;
 	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : false ;
 	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
 
@@ -117,6 +118,21 @@ $app->post ( '/foods/basic', function (Request $request, Response $response) {
 		$insert_data = array($owner, $food_id);							
 
 		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Favorite', $errCode, false, false, false );
+		if ($errCode) {
+		return $response_data;
+		}
+	}
+
+	
+	// if notes exist, update the member_food_favs table
+	if ($notes) {
+		$query = 'INSERT INTO food_notes 
+		(food_id, note) 
+		VALUES  (?, ?)';
+
+		$insert_data = array($food_id, $notes);							
+
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Note', $errCode, false, false, false );
 		if ($errCode) {
 		return $response_data;
 		}
