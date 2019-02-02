@@ -278,7 +278,7 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	}
 
 	$query = "SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, IFNULL(ROUND(f.serving_size,2),'') as servSize, 
-							f.serving_units as servUnits, f.ingredient_flag as recipe, m.user_name as owner
+							f.serving_units as servUnits, f.ingredient_flag as recipe, f.servings as recipeServs, m.user_name as owner
 						FROM food f, member m
 						WHERE f.owner = m.member_id
 								AND f.id = ?" ;
@@ -301,8 +301,18 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	}
 
 	$food_data = $response_data;
-	// retrieve the food ingredients
 
+	// calc the nutrients using the recursive function
+	$ingredient_flag = $food_data['recipe'];
+	$recipe_servings = $food_data['recipeServs'];
+	$nutrient_array = get_nutrients($db, $request, $response, $food_id, $ingredient_flag, $errCode, $recipe_servings);
+	if ($errCode) {
+		return $nutrient_array;
+	}
+
+	$food_data['servNuts'] = $nutrient_array;
+
+	// retrieve the food ingredients
 	$query = "SELECT fr.ingredient_id as ingredId, ROUND(fr.num_servings,1) as ingredServings, 
 							f.name as ingredName, f.description as ingredDesc
 						FROM food f, food_recipe fr
