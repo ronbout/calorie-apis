@@ -251,3 +251,141 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 	$data = array ('data' => $response_data );
 	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
 } );
+
+ // GET THE INGREDIENTS FOR A FOOD RECIPE
+ $app->get ( '/foods/recipe/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = array ();
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return $db;
+	}
+
+	$query = "SELECT f.id as foodId, f.name as foodName, f.description as foodDesc, f.owner as ownerId, IFNULL(ROUND(f.serving_size,2),'') as servSize, 
+							f.serving_units as servUnits, f.ingredient_flag as recipe, m.user_name as owner
+						FROM food f, member m
+						WHERE f.owner = m.member_id
+								AND f.id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Recipe', $errCode, true );
+	if ($errCode) {
+	return $response_data;
+	}
+
+	// check that this is a recipe by looking at ingredient flag
+	if (!$response_data['recipe']) {
+		$data ['error'] = false;
+		$data ['message'] = 'Food is not a recipe or meal';
+		$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+		return $newResponse;
+	}
+
+	$food_data = $response_data;
+	// retrieve the food ingredients
+
+	$query = "SELECT fr.ingredient_id as ingredId, ROUND(fr.num_servings,1) as ingredServings, 
+							f.name as ingredName, f.description as ingredDesc
+						FROM food f, food_recipe fr
+						WHERE fr.ingredient_id = f.id
+								AND fr.food_id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Recipe', $errCode, false, true );
+	if ($errCode) {
+	return $response_data;
+	}
+	// check for no ingredients found
+	if (!$response_data) {
+		$data ['error'] = false;
+		$data ['message'] = 'No Ingredients Found';
+		$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+		return $newResponse;
+	}
+
+	$food_data['ingreds'] = $response_data;
+
+	$data = array ('data' => $food_data );
+	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+} );
+
+/**
+ * GET THE FOOD NOTES
+ */
+$app->get ( '/foods/note/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = array ();
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return $db;
+	}
+	
+	$query = "SELECT note 
+							FROM food_notes 
+							WHERE food_id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Notes', $errCode);
+	if ($errCode) {
+	return $response_data;
+	}
+
+	// nothing found, just return an empty string
+	$response_data = $response_data ? $response_data : array('note' => '');
+
+	$data = array ('data' => $response_data );
+	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+} );
+
+
+/**
+ * GET THE FOOD NOTES AND FOOD FAVS
+ * this allows for only one api call in the program when
+ * a user selects a food to edit.
+ */
+$app->get ( '/foods/notefav/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = array ();
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode );
+	if ($errCode) {
+		return $db;
+	}
+	
+	$query = "SELECT note 
+							FROM food_notes 
+							WHERE food_id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Notes', $errCode);
+	if ($errCode) {
+	return $response_data;
+	}
+
+	// nothing found, just return an empty string
+	$food_data = $response_data ? $response_data : array('note' => '');
+
+	// now get the food favs
+	
+	$query = "SELECT member_id AS memberId 
+							FROM member_food_favs 
+							WHERE food_id = ?" ;
+
+	$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food Favorites', $errCode, true, true );
+	if ($errCode) {
+	return $response_data;
+	}
+
+	$food_data['favs'] = $response_data;
+
+
+	$data = array ('data' => $food_data );
+	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
+} );
