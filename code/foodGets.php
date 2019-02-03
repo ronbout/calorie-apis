@@ -62,7 +62,7 @@ function get_food($db, $request, $response, $id, &$errCode) {
 function get_nutrients($db, $request, $response, $food_id, $ingredient_flag, &$errCode, $recipe_servings) {
 	if ( !$ingredient_flag) {
 		// get the nutrients from food_detail and be done
-		$query = 'SELECT calories, points, fat_grams, carb_grams, protein_grams, fiber_grams 
+		$query = 'SELECT calories, points, fat_grams as fat, carb_grams as carbs, protein_grams as protein, fiber_grams as fiber
 							FROM food_detail WHERE id=?';
 	
 		$nutrient_array = pdo_exec( $request, $response, $db, $query, 
@@ -73,10 +73,10 @@ function get_nutrients($db, $request, $response, $food_id, $ingredient_flag, &$e
 	$nutrient_array = array(
 		'calories'=> 0,
 		'points' => 0,
-		'fat_grams' => 0,
-		'carb_grams' => 0,
-		'protein_grams' => 0,
-		'fiber_grams' => 0
+		'fat' => 0,
+		'carbs' => 0,
+		'protein' => 0,
+		'fiber' => 0
 	); 
 
 	// we have a food recipe,  need to look up ingredients recursively
