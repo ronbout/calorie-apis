@@ -314,7 +314,8 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 
 	// retrieve the food ingredients
 	$query = "SELECT fr.ingredient_id as ingredId, ROUND(fr.num_servings,1) as ingredServings, 
-							f.name as ingredName, f.description as ingredDesc
+							f.name as ingredName, f.description as ingredDesc, f.ingredient_flag as recipe,
+							f.servings as recipeServs
 						FROM food f, food_recipe fr
 						WHERE fr.ingredient_id = f.id
 								AND fr.food_id = ?" ;
@@ -331,7 +332,23 @@ $app->get ( '/foods/search', function (Request $request, Response $response) {
 		return $newResponse;
 	}
 
-	$food_data['ingreds'] = $response_data;
+	// have to calc the nutrients for each of the ingredients for recipe ui
+	$ingred_data = array();
+	foreach( $response_data as $ingred) {
+		// calc the nutrients using the recursive function
+		$food_id = $ingred['ingredId'];
+		$ingredient_flag = $ingred['recipe'];
+		$recipe_servings = $ingred['recipeServs'];
+		$ingred_nut_array = get_nutrients($db, $request, $response, $food_id, $ingredient_flag, $errCode, $recipe_servings);
+		if ($errCode) {
+			return $ingred_nut_array;
+		}
+		// add all the info to the ingred data
+		$ingred['ingredNuts'] = $ingred_nut_array;
+		$ingred_data[] = $ingred;
+	}
+
+	$food_data['ingreds'] = $ingred_data;
 
 	$data = array ('data' => $food_data );
 	$newResponse = $response->withJson ( $data, 200, JSON_NUMERIC_CHECK );
