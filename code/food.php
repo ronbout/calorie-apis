@@ -306,3 +306,169 @@ die(); */
 });
 
 
+/**
+ * EDIT a new basic food (not a recipe)
+ */
+$app->put ( '/foods/basic/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = $request->getParsedBody();
+	$return_data = array();
+
+	$owner = isset($data['owner']) ? filter_var($data['owner'], FILTER_SANITIZE_STRING) : '' ;
+ 	$name = isset($data['foodName']) ? filter_var($data['foodName'], FILTER_SANITIZE_STRING) : '' ;
+/*	$desc = isset($data['foodDesc']) ? filter_var($data['foodDesc'], FILTER_SANITIZE_STRING) : '' ;
+	$size = isset($data['servSize']) ? filter_var($data['servSize'], FILTER_SANITIZE_STRING) : null ;
+	$units = isset($data['servUnits']) ? filter_var($data['servUnits'], FILTER_SANITIZE_STRING) : 1 ;
+	$servings = isset($data['servings']) ? filter_var($data['servings'], FILTER_SANITIZE_STRING) : 1 ;
+	$calories = isset($data['calories']) ? filter_var($data['calories'], FILTER_SANITIZE_STRING) : '' ;
+	$fat_grams = isset($data['fat']) ? filter_var($data['fat'], FILTER_SANITIZE_STRING) : '' ;
+	$carb_grams = isset($data['carbs']) ? filter_var($data['carbs'], FILTER_SANITIZE_STRING) : '' ;
+	$protein_grams = isset($data['protein']) ? filter_var($data['protein'], FILTER_SANITIZE_STRING) : '' ;
+	$fiber_grams = isset($data['fiber']) ? filter_var($data['fiber'], FILTER_SANITIZE_STRING) : 0 ;
+	$points = isset($data['points']) ? filter_var($data['points'], FILTER_SANITIZE_STRING) : 0 ; */
+	$notes = isset($data['notes']) ? filter_var($data['notes'], FILTER_SANITIZE_STRING) : null ;
+	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : false ;
+	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode, $api );
+	if ($errCode) {
+		return $db;
+	}
+
+	// if the name or owner exists, we need to check that it is not going to 
+	// create a duplicate record for name/owner
+	if ($name || $owner) {
+
+		// need to get the original record 
+		$query = 'SELECT owner, name
+							FROM food 
+							WHERE id = ?';
+
+		$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food', $errCode, true, false, true );
+		if ($errCode) {
+			return $response_data;
+		}
+	
+		if (($name && $response_data['name'] !== $name) || ($owner && $response_data['owner'] !== $owner) ) {
+			// either name or owner is new, so test
+			// need to check if name/owner combo already exists. 
+			$test_name = $name ? $name : $response_data['name'];
+			$test_owner = $owner ? $owner : $response_data['owner'];
+
+			$query = 'SELECT id 
+								FROM food 
+								WHERE name = ?
+								AND owner = ?';
+
+			$response_data = pdo_exec( $request, $response, $db, $query, array($test_name, $test_owner), 'Updating Food', $errCode, false, false, true );
+			if ($errCode) {
+				return $response_data;
+			}
+
+			if ($response_data) {
+				// we have a duplicate
+				$return_data ['error'] = true;
+				$return_data ['errorCode'] = 45001; // we will base our custom errors (outside of the actual db) on 45000 and up
+				$return_data ['message'] = 'Duplicate owner - name combination';
+				$data = array('data' => $return_data);
+				$newResponse = $response->withJson ( $data, 500, JSON_NUMERIC_CHECK );
+				return $newResponse;
+			}
+		}
+	}
+
+	// set up fields to make a more generic update routine
+
+	$food_fields = array(
+		'name' 					=> 'foodName',
+		'description' 	=> 'foodDesc',
+		'owner' 				=> 'owner',
+		'serving_size' 	=> 'servSize',
+		'serving_units' => 'servUnits',
+		'servings' 			=> 'servings'
+	);
+
+	$food_detail_fields = array(
+		'calories' 			=> 'calories',
+		'fat_grams' 		=> 'fat',
+		'carb_grams'		=> 'carbs',
+		'protein_grams'	=> 'protein',
+		'fiber_grams'		=> 'fiber',
+		'points'				=> 'points'
+	);
+
+	$update_info = build_update_sql('food', $food_fields, $data, 'id', $food_id);
+	$query = $update_info[0];
+	$insert_data = $update_info[1];
+					
+	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food', $errCode, true, false, false );
+	if ($errCode) {
+		return $response_data;
+	}
+
+	$update_info = build_update_sql('food_detail', $food_detail_fields, $data, 'id', $food_id);
+	$query = $update_info[0];
+	$insert_data = $update_info[1];
+
+	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Detail', $errCode, false, false, false );
+	if ($errCode) {
+		return $response_data;
+	}
+
+	/***
+	 * WRITE A PROC FOR FOOD FAV AND CALL HERE!  NEEDS TO CHECK IF THE VALUE NEEDS UPDATING	
+	 */
+	// if this is a food fav, update the member_food_favs table
+	if ($fav && false) {
+		$query = 'INSERT INTO member_food_favs 
+		(member_id, food_id) 
+		VALUES  (?, ?)';
+
+		$insert_data = array($owner, $food_id);							
+
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Favorite', $errCode, false, false, false );
+		if ($errCode) {
+		return $response_data;
+		}
+	}
+
+	
+	/***
+	 * WRITE A PROC FOR NOTES AND CALL HERE!  NEEDS TO CHECK IF THE VALUE NEEDS UPDATING	
+	 */
+	// if notes exist, update the member_food_favs table
+	if ($notes && false) {
+		$query = 'INSERT INTO food_notes 
+		(food_id, note) 
+		VALUES  (?, ?)';
+
+		$insert_data = array($food_id, $notes);							
+
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Note', $errCode, false, false, false );
+		if ($errCode) {
+		return $response_data;
+		}
+	}
+
+	$return_data = array('foodId' => $food_id);
+	$return_data = array('data' => $return_data);
+	$newResponse = $response->withJson($return_data, 201, JSON_NUMERIC_CHECK );
+	return $newResponse; 
+});
+
+function build_update_sql ($table, $fields, $data, $id_field, $id) {
+	$parms = array();
+	$set_str = '';
+	foreach($fields as $field => $api_field) {
+		if (isset($data[$api_field]) ) {
+			$set_str .= " $field = ?,";
+			$parms[] = filter_var($data[$api_field]);
+		}
+	}
+	$set_str = trim($set_str, ',');
+	$query = "UPDATE $table SET $set_str WHERE $id_field = $id";
+	return array($query, $parms);
+}
