@@ -31,9 +31,9 @@ $app->post ( '/foods/basic', function (Request $request, Response $response) {
 
 	// check required fields
 	if (!$name || !$owner || $calories === '' || $fat_grams === '' || $carb_grams === '' || $protein_grams === '' ) {
-		$data['error'] = true;
-		$data['message'] = 'Required field is missing.  Please see api docs.';
-		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
+		$return_data['error'] = true;
+		$return_data['message'] = 'Required field is missing.  Please see api docs.';
+		$newResponse = $response->withJson($return_data, 400, JSON_NUMERIC_CHECK );
 		return $newResponse;
 	}
 
@@ -165,9 +165,9 @@ $app->post ( '/foods/recipe', function (Request $request, Response $response) {
 
 	// check required fields
 	if (!$name || !$owner || ! count($ingreds) ) {
-		$data['error'] = true;
-		$data['message'] = 'Required field is missing.  Please see api docs.';
-		$newResponse = $response->withJson($data, 400, JSON_NUMERIC_CHECK );
+		$return_data['error'] = true;
+		$return_data['message'] = 'Required field is missing.  Please see api docs.';
+		$newResponse = $response->withJson($return_data, 400, JSON_NUMERIC_CHECK );
 		return $newResponse;
 	}
 
@@ -449,16 +449,49 @@ $app->put ( '/foods/basic/{id}', function (Request $request, Response $response)
 	return $newResponse; 
 });
 
-function build_update_sql ($table, $fields, $data, $id_field, $id) {
-	$parms = array();
-	$set_str = '';
-	foreach($fields as $field => $api_field) {
-		if (isset($data[$api_field]) ) {
-			$set_str .= " $field = ?,";
-			$parms[] = filter_var($data[$api_field]);
+/**
+ * Update food favs
+ */
+$app->put ( '/foods/fav/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = $request->getParsedBody();
+	$return_data = array();
+
+	$owner = isset($data['owner']) ? filter_var($data['owner'], FILTER_SANITIZE_STRING) : '' ;
+	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : null ;
+	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
+
+	
+	// check required fields
+	if ($fav === null || !$owner)  {
+		$return_data['error'] = true;
+		$return_data['message'] = 'Required field is missing.  Please see api docs.';
+		$newResponse = $response->withJson($return_data, 400, JSON_NUMERIC_CHECK );
+		return $newResponse;
+	}
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode, $api );
+	if ($errCode) {
+		return $db;
+	}
+
+	// if food fav exists, update the member_food_favs table using a db proc
+	if ($fav !== null) {
+		$query = "CALL  update_food_favs( ?, ?, ? )";
+
+		$insert_data = array($owner, $food_id, $fav);							
+
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Favorite', $errCode, false, false, false );
+		if ($errCode) {
+		return $response_data;
 		}
 	}
-	$set_str = trim($set_str, ',');
-	$query = "UPDATE $table SET $set_str WHERE $id_field = $id";
-	return array($query, $parms);
-}
+
+	$return_data = array('foodId' => $food_id);
+	$return_data = array('data' => $return_data);
+	$newResponse = $response->withJson($return_data, 201, JSON_NUMERIC_CHECK );
+	return $newResponse; 
+});

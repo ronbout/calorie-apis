@@ -242,3 +242,17 @@ function createLowerObject( $obj, $newObjName, $fieldList ) {
 	count($tmpObj) && $obj[$newObjName] = $tmpObj;	
 	return $obj;
 }
+
+function build_update_sql ($table, $fields, $data, $id_field, $id) {
+	$parms = array();
+	$set_str = '';
+	foreach($fields as $field => $api_field) {
+		if (isset($data[$api_field]) ) {
+			$set_str .= " $field = ?,";
+			$parms[] = filter_var($data[$api_field]);
+		}
+	}
+	$set_str = trim($set_str, ',');
+	$query = "UPDATE $table SET $set_str WHERE $id_field = $id";
+	return array($query, $parms);
+}
