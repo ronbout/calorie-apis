@@ -458,10 +458,9 @@ $app->put ( '/foods/fav/{id}', function (Request $request, Response $response) {
 	$return_data = array();
 
 	$owner = isset($data['owner']) ? filter_var($data['owner'], FILTER_SANITIZE_STRING) : '' ;
-	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : null ;
+	$fav = isset($data['foodFav']) ? ($data['foodFav'] ? 1 : 0) : null ;
 	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
 
-	
 	// check required fields
 	if ($fav === null || !$owner)  {
 		$return_data['error'] = true;
