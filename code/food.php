@@ -285,7 +285,7 @@ die(); */
 	}
 
 	
-	// if notes exist, update the member_food_favs table
+	// if notes exist, update the food_notes table
 	if ($notes) {
 		$query = 'INSERT INTO food_notes 
 		(food_id, note) 
@@ -327,7 +327,7 @@ $app->put ( '/foods/basic/{id}', function (Request $request, Response $response)
 	$fiber_grams = isset($data['fiber']) ? filter_var($data['fiber'], FILTER_SANITIZE_STRING) : 0 ;
 	$points = isset($data['points']) ? filter_var($data['points'], FILTER_SANITIZE_STRING) : 0 ; */
 	$notes = isset($data['notes']) ? filter_var($data['notes'], FILTER_SANITIZE_STRING) : null ;
-	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : false ;
+	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : null ;
 	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
 
 	// login to the database. if unsuccessful, the return value is the
@@ -418,36 +418,26 @@ $app->put ( '/foods/basic/{id}', function (Request $request, Response $response)
 		return $response_data;
 	}
 
-	/***
-	 * WRITE A PROC FOR FOOD FAV AND CALL HERE!  NEEDS TO CHECK IF THE VALUE NEEDS UPDATING	
-	 */
-	// if this is a food fav, update the member_food_favs table
-	if ($fav && false) {
-		$query = 'INSERT INTO member_food_favs 
-		(member_id, food_id) 
-		VALUES  (?, ?)';
+	
+	// if food fav exists, update the member_food_favs table using a db proc
+	if ($fav !== null) {
+		$query = "CALL  update_food_favs( ?, ?, ? )";
 
-		$insert_data = array($owner, $food_id);							
+		$insert_data = array($owner, $food_id, $fav);							
 
-		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Favorite', $errCode, false, false, false );
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Favorite', $errCode, false, false, false );
 		if ($errCode) {
 		return $response_data;
 		}
 	}
 
-	
-	/***
-	 * WRITE A PROC FOR NOTES AND CALL HERE!  NEEDS TO CHECK IF THE VALUE NEEDS UPDATING	
-	 */
-	// if notes exist, update the member_food_favs table
-	if ($notes && false) {
-		$query = 'INSERT INTO food_notes 
-		(food_id, note) 
-		VALUES  (?, ?)';
+	// if notes exist, update the food_notes table using db proc
+	if ($notes !== null) {
+		$query = "CALL update_food_notes( ?, ? )";
 
 		$insert_data = array($food_id, $notes);							
 
-		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Note', $errCode, false, false, false );
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Note', $errCode, false, false, false );
 		if ($errCode) {
 		return $response_data;
 		}
