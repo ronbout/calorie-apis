@@ -252,6 +252,8 @@ function build_update_sql ($table, $fields, $data, $id_field, $id) {
 			$parms[] = filter_var($data[$api_field]);
 		}
 	}
+	// check that some fields need to be updated
+	if (!count($parms)) return false;
 	$set_str = trim($set_str, ',');
 	$query = "UPDATE $table SET $set_str WHERE $id_field = $id";
 	return array($query, $parms);

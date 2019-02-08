@@ -109,14 +109,12 @@ $app->post ( '/foods/basic', function (Request $request, Response $response) {
 	}
 
 	// if this is a food fav, update the member_food_favs table
-	if ($fav) {
-		$query = 'INSERT INTO member_food_favs 
-		(member_id, food_id) 
-		VALUES  (?, ?)';
+	if ($fav !== null) {
+		$query = "CALL  update_food_favs( ?, ?, ? )";
 
-		$insert_data = array($owner, $food_id);							
+		$insert_data = array($owner, $food_id, $fav);							
 
-		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Favorite', $errCode, false, false, false );
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Favorite', $errCode, false, false, false );
 		if ($errCode) {
 		return $response_data;
 		}
@@ -237,9 +235,6 @@ $app->post ( '/foods/recipe', function (Request $request, Response $response) {
 
 	// use food id to insert ingredients into food recipe
 	// have to build string from ingreds array
-
-
-
  	$query = 'INSERT INTO food_recipe
 							VALUES ';
 
@@ -256,10 +251,6 @@ $app->post ( '/foods/recipe', function (Request $request, Response $response) {
 	// have to remove final comma
 	$query = trim($query, ',');
 
-/* echo $query, '   ';
-var_dump($insert_data);
-die(); */
-
 	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Recipe', $errCode, false, false, false );
 	if ($errCode) {
 		// we have to rollback the insert of the food table as it does not have transactions
@@ -271,14 +262,12 @@ die(); */
 	}
 
 	// if this is a food fav, update the member_food_favs table
-	if ($fav) {
-		$query = 'INSERT INTO member_food_favs 
-		(member_id, food_id) 
-		VALUES  (?, ?)';
+	if ($fav !== null) {
+		$query = "CALL  update_food_favs( ?, ?, ? )";
 
-		$insert_data = array($owner, $food_id);							
+		$insert_data = array($owner, $food_id, $fav);							
 
-		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Favorite', $errCode, false, false, false );
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Favorite', $errCode, false, false, false );
 		if ($errCode) {
 		return $response_data;
 		}
@@ -307,7 +296,7 @@ die(); */
 
 
 /**
- * EDIT a new basic food (not a recipe)
+ * EDIT a basic food (not a recipe)
  */
 $app->put ( '/foods/basic/{id}', function (Request $request, Response $response) {
 	$food_id = $request->getAttribute ( 'id' );
@@ -316,18 +305,7 @@ $app->put ( '/foods/basic/{id}', function (Request $request, Response $response)
 
 	$owner = isset($data['owner']) ? filter_var($data['owner'], FILTER_SANITIZE_STRING) : '' ;
  	$name = isset($data['foodName']) ? filter_var($data['foodName'], FILTER_SANITIZE_STRING) : '' ;
-/*	$desc = isset($data['foodDesc']) ? filter_var($data['foodDesc'], FILTER_SANITIZE_STRING) : '' ;
-	$size = isset($data['servSize']) ? filter_var($data['servSize'], FILTER_SANITIZE_STRING) : null ;
-	$units = isset($data['servUnits']) ? filter_var($data['servUnits'], FILTER_SANITIZE_STRING) : 1 ;
-	$servings = isset($data['servings']) ? filter_var($data['servings'], FILTER_SANITIZE_STRING) : 1 ;
-	$calories = isset($data['calories']) ? filter_var($data['calories'], FILTER_SANITIZE_STRING) : '' ;
-	$fat_grams = isset($data['fat']) ? filter_var($data['fat'], FILTER_SANITIZE_STRING) : '' ;
-	$carb_grams = isset($data['carbs']) ? filter_var($data['carbs'], FILTER_SANITIZE_STRING) : '' ;
-	$protein_grams = isset($data['protein']) ? filter_var($data['protein'], FILTER_SANITIZE_STRING) : '' ;
-	$fiber_grams = isset($data['fiber']) ? filter_var($data['fiber'], FILTER_SANITIZE_STRING) : 0 ;
-	$points = isset($data['points']) ? filter_var($data['points'], FILTER_SANITIZE_STRING) : 0 ; */
 	$notes = isset($data['notes']) ? filter_var($data['notes'], FILTER_SANITIZE_STRING) : null ;
-	$fav = isset($data['foodFav']) ? filter_var($data['foodFav'], FILTER_SANITIZE_STRING) : null ;
 	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
 
 	// login to the database. if unsuccessful, the return value is the
@@ -401,34 +379,167 @@ $app->put ( '/foods/basic/{id}', function (Request $request, Response $response)
 	);
 
 	$update_info = build_update_sql('food', $food_fields, $data, 'id', $food_id);
-	$query = $update_info[0];
-	$insert_data = $update_info[1];
-					
-	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food', $errCode, true, false, false );
-	if ($errCode) {
-		return $response_data;
+	if ($update_info) {
+		$query = $update_info[0];
+		$insert_data = $update_info[1];
+						
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food', $errCode, true, false, false );
+		if ($errCode) {
+			return $response_data;
+		}
 	}
 
 	$update_info = build_update_sql('food_detail', $food_detail_fields, $data, 'id', $food_id);
-	$query = $update_info[0];
-	$insert_data = $update_info[1];
-
-	$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Detail', $errCode, false, false, false );
-	if ($errCode) {
-		return $response_data;
+	if ($update_info) {
+		$query = $update_info[0];
+		$insert_data = $update_info[1];
+	
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Detail', $errCode, false, false, false );
+		if ($errCode) {
+			return $response_data;
+		}
 	}
 
-	
-	// if food fav exists, update the member_food_favs table using a db proc
-	if ($fav !== null) {
-		$query = "CALL  update_food_favs( ?, ?, ? )";
+	// if notes exist, update the food_notes table using db proc
+	if ($notes !== null) {
+		$query = "CALL update_food_notes( ?, ? )";
 
-		$insert_data = array($owner, $food_id, $fav);							
+		$insert_data = array($food_id, $notes);							
 
-		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Favorite', $errCode, false, false, false );
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food Note', $errCode, false, false, false );
 		if ($errCode) {
 		return $response_data;
 		}
+	}
+
+	$return_data = array('foodId' => $food_id);
+	$return_data = array('data' => $return_data);
+	$newResponse = $response->withJson($return_data, 201, JSON_NUMERIC_CHECK );
+	return $newResponse; 
+});
+
+
+/**
+ * EDIT a food recipe/meal
+ */
+$app->put ( '/foods/recipe/{id}', function (Request $request, Response $response) {
+	$food_id = $request->getAttribute ( 'id' );
+	$data = $request->getParsedBody();
+	$return_data = array();
+
+	$owner = isset($data['owner']) ? filter_var($data['owner'], FILTER_SANITIZE_STRING) : '' ;
+ 	$name = isset($data['foodName']) ? filter_var($data['foodName'], FILTER_SANITIZE_STRING) : '' ;
+	$notes = isset($data['notes']) ? filter_var($data['notes'], FILTER_SANITIZE_STRING) : null ;
+	$api = isset($data['apiKey']) ? filter_var($data['apiKey'], FILTER_SANITIZE_STRING) : '' ;
+	$ingreds = isset($data['ingreds']) ? $data['ingreds'] : array();
+
+	// login to the database. if unsuccessful, the return value is the
+	// Response to send back, otherwise the db connection;
+	$errCode = 0;
+	$db = db_connect ( $request, $response, $errCode, $api );
+	if ($errCode) {
+		return $db;
+	}
+
+	// if the name or owner exists, we need to check that it is not going to 
+	// create a duplicate record for name/owner
+	if ($name || $owner) {
+
+		// need to get the original record 
+		$query = 'SELECT owner, name
+							FROM food 
+							WHERE id = ?';
+
+		$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Retrieving Food', $errCode, true, false, true );
+		if ($errCode) {
+			return $response_data;
+		}
+	
+		if (($name && $response_data['name'] !== $name) || ($owner && $response_data['owner'] !== $owner) ) {
+			// either name or owner is new, so test
+			// need to check if name/owner combo already exists. 
+			$test_name = $name ? $name : $response_data['name'];
+			$test_owner = $owner ? $owner : $response_data['owner'];
+
+			$query = 'SELECT id 
+								FROM food 
+								WHERE name = ?
+								AND owner = ?';
+
+			$response_data = pdo_exec( $request, $response, $db, $query, array($test_name, $test_owner), 'Updating Food', $errCode, false, false, true );
+			if ($errCode) {
+				return $response_data;
+			}
+
+			if ($response_data) {
+				// we have a duplicate
+				$return_data ['error'] = true;
+				$return_data ['errorCode'] = 45001; // we will base our custom errors (outside of the actual db) on 45000 and up
+				$return_data ['message'] = 'Duplicate owner - name combination';
+				$data = array('data' => $return_data);
+				$newResponse = $response->withJson ( $data, 500, JSON_NUMERIC_CHECK );
+				return $newResponse;
+			}
+		}
+	}
+
+	// set up fields to make a more generic update routine
+
+	$food_fields = array(
+		'name' 					=> 'foodName',
+		'description' 	=> 'foodDesc',
+		'owner' 				=> 'owner',
+		'serving_size' 	=> 'servSize',
+		'serving_units' => 'servUnits',
+		'servings' 			=> 'servings'
+	);
+
+	$update_info = build_update_sql('food', $food_fields, $data, 'id', $food_id);
+	if ($update_info) {
+		$query = $update_info[0];
+		$insert_data = $update_info[1];
+						
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Updating Food', $errCode, true, false, false );
+		if ($errCode) {
+			return $response_data;
+		}
+	}
+
+
+	if (count($ingreds)) {
+		// simplest approach is just to delete the old ingreds
+		// and then insert the new ingredients into food recipe
+		// have to build string from ingreds array
+		$query = 'DELETE FROM food_recipe 
+							WHERE food_id = ?';
+
+							
+		$response_data = pdo_exec( $request, $response, $db, $query, array($food_id), 'Deleting Food Ingredients', $errCode, false, false, false );
+		if ($errCode) {
+			return $response_data;
+		}
+
+		$query = 'INSERT INTO food_recipe
+								VALUES ';
+
+		$insert_data = array();	
+
+		// loop through ingreds and build SQL placeholders and array of data parameters
+		foreach($ingreds as $ingred) {
+			$query .= ' (? , ?, ?),';
+			$insert_data[] = $food_id;
+			$insert_data[] = $ingred['ingredId'];
+			$insert_data[] = $ingred['ingredServings'];
+		}
+
+		// have to remove final comma
+		$query = trim($query, ',');
+
+		$response_data = pdo_exec( $request, $response, $db, $query, $insert_data, 'Creating Food Recipe', $errCode, false, false, false );
+		if ($errCode) {
+			return $response_data;
+		}
+
 	}
 
 	// if notes exist, update the food_notes table using db proc
