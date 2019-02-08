@@ -495,6 +495,7 @@ $app->put ( '/foods/recipe/{id}', function (Request $request, Response $response
 	);
 
 	$update_info = build_update_sql('food', $food_fields, $data, 'id', $food_id);
+	
 	if ($update_info) {
 		$query = $update_info[0];
 		$insert_data = $update_info[1];

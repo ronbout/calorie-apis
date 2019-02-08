@@ -249,7 +249,7 @@ function build_update_sql ($table, $fields, $data, $id_field, $id) {
 	foreach($fields as $field => $api_field) {
 		if (isset($data[$api_field]) ) {
 			$set_str .= " $field = ?,";
-			$parms[] = filter_var($data[$api_field]);
+			$parms[] = $data[$api_field] === '' ? null : filter_var($data[$api_field]);
 		}
 	}
 	// check that some fields need to be updated
